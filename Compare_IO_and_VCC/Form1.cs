@@ -33,20 +33,40 @@ namespace Compare_IO_and_VCC
             {
                 try
                 {
+                    Stopwatch sw = new Stopwatch();
                     XDocument Xdoc = new XDocument();
-                    try
-                    {
-                        Xdoc = XDocument.Load(openFileDialog1.OpenFile());
-                        XNamespace XMLnamespace = "http://schemas.microsoft.com/clr/nsassem/BKVibro.Compass.Server/Dbsimulator%2C%20Version%3D0.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull";
-                        IEnumerable<XElement> tags = Xdoc.Descendants(XMLnamespace + "ChannelServerSetupNode");
+                    List<XElement> myList = new List<XElement>();
+                    Xdoc = XDocument.Load(openFileDialog1.OpenFile());
+                    XNamespace XMLnamespace = "http://schemas.microsoft.com/clr/nsassem/BKVibro.Compass.Server/Dbsimulator%2C%20Version%3D0.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull";
+                    IEnumerable<XElement> tags = Xdoc.Descendants(XMLnamespace + "ChannelServerSetupNode");
+                    sw.Start();
+                    IEnumerable<XElement> tagQuery =
+                    from tag in tags
+                    let s = tag.Element("NodeName").Value
+                    where !(s.Contains("Relay") ||
+                                s.Contains("Trigger Channel") ||
+                                s.Contains("Channel var.") ||
+                                s.Contains("Binary Input") ||
+                                s.Contains("Rod Drop") ||
+                                s.Contains("TM Input") ||
+                                s.Contains("DC Output") ||
+                                s.Contains("PS_Monitor") ||
+                                s.Contains("Tachometer"))
+                    select tag;
+                    sw.Stop();
+                    textBox1.Text = "Query time [ticks]: " + sw.ElapsedTicks.ToString();
 
-                        foreach (XElement x in tags)
-                            listBox1.Items.Add(x.Element("NodeName").Value.ToString());
-                    }
-                    catch (Exception ex)
+                    foreach(XElement x in tagQuery)
                     {
-                        Debug.WriteLine(ex.Message);
-                    }
+                        try
+                        {
+                            listBox1.Items.Add(x.Element("NodeName").Value + " " + x.Element("NodeId").Value);
+                        }
+                        catch(Exception exc)
+                        {
+                            Debug.WriteLine(exc.Message);
+                        }
+                    }   
                 }
                 catch (Exception ex)
                 {
