@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Linq;
+using System.IO.Compression;
 
 namespace Compare_IO_and_VCC
 {
@@ -23,56 +24,114 @@ namespace Compare_IO_and_VCC
 
         private void Run_Button_Click(object sender, EventArgs e)
         {
-
+            
         }
 
         private void Load_VCC_file_Button_Click(object sender, EventArgs e)
         {
-            openFileDialog1.Filter = "XML Files (.xml)|*.xml|All Files (*.*)|*.*";
+            openFileDialog1.Filter = "VCC Files (.VCC)|*.vcc|All Files (*.*)|*.*";
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                try
+                foreach (String filename in openFileDialog1.FileNames)
                 {
+                    openFileDialog1.FileName = filename;
                     Stopwatch sw = new Stopwatch();
-                    XDocument Xdoc = new XDocument();
-                    List<XElement> myList = new List<XElement>();
-                    Xdoc = XDocument.Load(openFileDialog1.OpenFile());
-                    XNamespace XMLnamespace = "http://schemas.microsoft.com/clr/nsassem/BKVibro.Compass.Server/Dbsimulator%2C%20Version%3D0.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull";
-                    IEnumerable<XElement> tags = Xdoc.Descendants(XMLnamespace + "ChannelServerSetupNode");
+                    //Extract XML files from VCC
                     sw.Start();
-                    IEnumerable<XElement> tagQuery =
-                    from tag in tags
-                    let s = tag.Element("NodeName").Value
-                    where !(s.Contains("Relay") ||
-                                s.Contains("Trigger Channel") ||
-                                s.Contains("Channel var.") ||
-                                s.Contains("Binary Input") ||
-                                s.Contains("Rod Drop") ||
-                                s.Contains("TM Input") ||
-                                s.Contains("DC Output") ||
-                                s.Contains("PS_Monitor") ||
-                                s.Contains("Tachometer"))
-                    select tag;
+                    DirectoryInfo d = Extract_VCC(openFileDialog1, "tempfolder");
                     sw.Stop();
-                    textBox1.Text = "Query time [ticks]: " + sw.ElapsedTicks.ToString();
+                    textBox1.Text = "Query time [ticks]: " + sw.ElapsedMilliseconds.ToString();
+                    IEnumerable<string> XMLfiles = Directory.EnumerateFiles(d.FullName);
 
-                    foreach(XElement x in tagQuery)
+                    IEnumerable<string> serveresetupnodes_query =
+                        from name in XMLfiles
+                        where name.Contains("ServerSetupNode")
+                        select name;
+
+                    //Process files
+                    try
                     {
-                        try
+                        XDocument Xdoc = new XDocument();
+                        List<XElement> myList = new List<XElement>();
+                        Xdoc = XDocument.Load(serveresetupnodes_query.First<string>());
+                        XNamespace XMLnamespace = "http://schemas.microsoft.com/clr/nsassem/BKVibro.Compass.Server/Dbsimulator%2C%20Version%3D0.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull";
+                        IEnumerable<XElement> tags = Xdoc.Descendants(XMLnamespace + "ChannelServerSetupNode");
+
+                        IEnumerable<XElement> tagQuery =
+                        from tag in tags
+                        let s = tag.Element("NodeName").Value
+                        where !(s.Contains("Relay") ||
+                                    s.Contains("Trigger Channel") ||
+                                    s.Contains("Channel var.") ||
+                                    s.Contains("Binary Input") ||
+                                    s.Contains("Rod Drop") ||
+                                    s.Contains("TM Input") ||
+                                    s.Contains("DC Output") ||
+                                    s.Contains("PS_Monitor") ||
+                                    s.Contains("Tachometer"))
+                        select tag;
+
+                        TreeNode rootnode = treeView1.Nodes.Add(openFileDialog1.SafeFileName);
+
+                        foreach (XElement x in tagQuery)
                         {
-                            listBox1.Items.Add(x.Element("NodeName").Value + " " + x.Element("NodeId").Value);
+                            try
+                            {
+                                TreeNode node = rootnode.Nodes.Add(x.Element("NodeName").Value);
+                                node.Nodes.Add(x.Element("NodeId").Value, "Node Id");
+                                node.Nodes.Add(x.Element("NodeId").Value, "Range");
+                                TreeNode node_limit = node.Nodes.Add(x.Element("NodeId").Value, "Limits");
+                                node_limit.Nodes.Add(x.Element("NodeId").Value, "Alert High");
+                                node_limit.Nodes.Add(x.Element("NodeId").Value, "Danger High");
+                                node_limit.Nodes.Add(x.Element("NodeId").Value, "Alert Low");
+                                node_limit.Nodes.Add(x.Element("NodeId").Value, "Danger Low");
+                            }
+                            catch (Exception exc)
+                            {
+                                Debug.WriteLine(exc.Message);
+                            }
                         }
-                        catch(Exception exc)
-                        {
-                            Debug.WriteLine(exc.Message);
-                        }
-                    }   
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
+                        treeView1.Update();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
+                    }
+                    //Delete temp folder
+                    Directory.Delete(d.FullName, true);
                 }
             }
+        }
+
+        private DirectoryInfo Extract_VCC(OpenFileDialog fd, string s)
+        {
+            //Extract XML files in VCC to disc
+            FileInfo fileinfo = new FileInfo(fd.FileName);
+            DirectoryInfo di = Directory.CreateDirectory(fileinfo.DirectoryName + "\\" + s);
+            try
+            {
+                using (ZipArchive archive = ZipFile.OpenRead(fileinfo.FullName))
+                {
+                    foreach (ZipArchiveEntry entry in archive.Entries)
+                    {
+                        if (entry.FullName.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
+                        {
+                            entry.ExtractToFile(Path.Combine(di.FullName, entry.Name), true);
+                        }
+                    }
+                }
+            }
+            catch (Exception exc)
+            {
+                Debug.WriteLine(exc.GetType());
+                Debug.WriteLine(exc.Message);
+            }
+            return di;
+        }
+
+        private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            textBox1.Text = e.Node.Name;
         }
     }
 }
