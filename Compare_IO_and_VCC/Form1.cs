@@ -17,6 +17,9 @@ namespace Compare_IO_and_VCC
 {
     public partial class Form1 : Form
     {
+
+        DirectoryInfo di;
+
         public Form1()
         {
             InitializeComponent();
@@ -34,19 +37,21 @@ namespace Compare_IO_and_VCC
             {
                 foreach (String filename in openFileDialog1.FileNames)
                 {
-                    openFileDialog1.FileName = filename;
-                    Stopwatch sw = new Stopwatch();
-                    //Extract XML files from VCC
-                    sw.Start();
-                    DirectoryInfo d = Extract_VCC(openFileDialog1, "tempfolder");
-                    sw.Stop();
-                    textBox1.Text = "Query time [ticks]: " + sw.ElapsedMilliseconds.ToString();
-                    IEnumerable<string> XMLfiles = Directory.EnumerateFiles(d.FullName);
+                    
+                        openFileDialog1.FileName = filename;
+                        Stopwatch sw = new Stopwatch();
 
-                    IEnumerable<string> serveresetupnodes_query =
-                        from name in XMLfiles
-                        where name.Contains("ServerSetupNode")
-                        select name;
+                        //Extract XML files from VCC
+                        sw.Start();
+                        Extract_VCC(openFileDialog1, "tempfolder");
+                        sw.Stop();
+                        textBox1.Text = "Query time [ticks]: " + sw.ElapsedMilliseconds.ToString();
+                        IEnumerable<string> XMLfiles = Directory.EnumerateFiles(di.FullName);
+
+                        IEnumerable<string> serveresetupnodes_query =
+                            from name in XMLfiles
+                            where name.Contains("ServerSetupNode")
+                            select name;
 
                     //Process files
                     try
@@ -98,16 +103,32 @@ namespace Compare_IO_and_VCC
                         MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
                     }
                     //Delete temp folder
-                    Directory.Delete(d.FullName, true);
+                    Directory.Delete(di.FullName, true);
                 }
             }
         }
 
-        private DirectoryInfo Extract_VCC(OpenFileDialog fd, string s)
+        private void Extract_VCC(OpenFileDialog fd, string s)
         {
             //Extract XML files in VCC to disc
             FileInfo fileinfo = new FileInfo(fd.FileName);
-            DirectoryInfo di = Directory.CreateDirectory(fileinfo.DirectoryName + "\\" + s);
+            di = Directory.CreateDirectory(fileinfo.DirectoryName + "\\" + s);
+            backgroundWorker1.RunWorkerAsync(fileinfo);
+            while (this.backgroundWorker1.IsBusy)
+            {
+                Application.DoEvents();
+            }
+
+        }
+
+        private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            textBox1.Text = e.Node.Name;
+        }
+
+        private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
+        {
+            FileInfo fileinfo = (FileInfo)e.Argument;
             try
             {
                 using (ZipArchive archive = ZipFile.OpenRead(fileinfo.FullName))
@@ -126,12 +147,6 @@ namespace Compare_IO_and_VCC
                 Debug.WriteLine(exc.GetType());
                 Debug.WriteLine(exc.Message);
             }
-            return di;
-        }
-
-        private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
-        {
-            textBox1.Text = e.Node.Name;
         }
     }
 }
