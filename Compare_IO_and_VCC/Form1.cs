@@ -19,6 +19,7 @@ namespace Compare_IO_and_VCC
     {
 
         DirectoryInfo di;
+        FileInfo fileinfo;
 
         public Form1()
         {
@@ -37,21 +38,20 @@ namespace Compare_IO_and_VCC
             {
                 foreach (String filename in openFileDialog1.FileNames)
                 {
-                    
-                        openFileDialog1.FileName = filename;
-                        Stopwatch sw = new Stopwatch();
+                    openFileDialog1.FileName = filename;
+                    Stopwatch sw = new Stopwatch();
 
-                        //Extract XML files from VCC
-                        sw.Start();
-                        Extract_VCC(openFileDialog1, "tempfolder");
-                        sw.Stop();
-                        textBox1.Text = "Query time [ticks]: " + sw.ElapsedMilliseconds.ToString();
-                        IEnumerable<string> XMLfiles = Directory.EnumerateFiles(di.FullName);
+                    //Async Extract of XML files from VCC
+                    sw.Start();
+                    Extract_VCC(openFileDialog1, "tempfolder");
+                    sw.Stop();
+                    textBox1.Text = "Extracting time [miliseconds]: " + sw.ElapsedMilliseconds.ToString();
+                    IEnumerable<string> XMLfiles = Directory.EnumerateFiles(di.FullName);
 
-                        IEnumerable<string> serveresetupnodes_query =
-                            from name in XMLfiles
-                            where name.Contains("ServerSetupNode")
-                            select name;
+                    IEnumerable<string> serveresetupnodes_query =
+                        from name in XMLfiles
+                        where name.Contains("ServerSetupNode")
+                        select name;
 
                     //Process files
                     try
@@ -111,14 +111,13 @@ namespace Compare_IO_and_VCC
         private void Extract_VCC(OpenFileDialog fd, string s)
         {
             //Extract XML files in VCC to disc
-            FileInfo fileinfo = new FileInfo(fd.FileName);
+            fileinfo = new FileInfo(fd.FileName);
             di = Directory.CreateDirectory(fileinfo.DirectoryName + "\\" + s);
             backgroundWorker1.RunWorkerAsync(fileinfo);
             while (this.backgroundWorker1.IsBusy)
             {
                 Application.DoEvents();
             }
-
         }
 
         private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
@@ -128,7 +127,7 @@ namespace Compare_IO_and_VCC
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            FileInfo fileinfo = (FileInfo)e.Argument;
+            BackgroundWorker bw = sender as BackgroundWorker;
             try
             {
                 using (ZipArchive archive = ZipFile.OpenRead(fileinfo.FullName))
