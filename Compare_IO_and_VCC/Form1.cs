@@ -20,10 +20,12 @@ namespace Compare_IO_and_VCC
 
         DirectoryInfo di;
         FileInfo fileinfo;
+        List<FileInfo> files;
 
         public Form1()
         {
             InitializeComponent();
+            files = new List<FileInfo>();
         }
 
         private void Run_Button_Click(object sender, EventArgs e)
@@ -84,7 +86,11 @@ namespace Compare_IO_and_VCC
                             {
                                 TreeNode node = rootnode.Nodes.Add(x.Element("NodeName").Value);
                                 node.Nodes.Add(x.Element("NodeId").Value, "Node Id");
-                                node.Nodes.Add(x.Element("NodeId").Value, "Range");
+
+                                TreeNode node_range = node.Nodes.Add(x.Element("NodeId").Value, "Range");
+                                node_range.Nodes.Add(x.Element("NodeId").Value, "Range Low");
+                                node_range.Nodes.Add(x.Element("NodeId").Value, "Range High");
+
                                 TreeNode node_limit = node.Nodes.Add(x.Element("NodeId").Value, "Limits");
                                 node_limit.Nodes.Add(x.Element("NodeId").Value, "Alert High");
                                 node_limit.Nodes.Add(x.Element("NodeId").Value, "Danger High");
@@ -146,6 +152,24 @@ namespace Compare_IO_and_VCC
                 Debug.WriteLine(exc.GetType());
                 Debug.WriteLine(exc.Message);
             }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            openFileDialog2.Filter = "Excel Files |*.xlsx;*.xls|All Files (*.*)|*.*";
+            if (openFileDialog2.ShowDialog() == DialogResult.OK)
+            {
+                listBox1.Items.Clear();
+                files.AddRange(openFileDialog2.FileNames.Select(fn => new FileInfo(fn)).ToList());
+                var filename_query = files.Select(filename => filename.Name);
+                listBox1.Items.AddRange(filename_query.ToArray<String>());
+            }
+        }
+
+        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ListBox lb = sender as ListBox;
+            textBox1.Text = files.ElementAt(lb.SelectedIndex).FullName;
         }
     }
 }
