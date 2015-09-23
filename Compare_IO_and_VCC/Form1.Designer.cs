@@ -69,9 +69,9 @@
             // 
             this.button1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.button1.Enabled = false;
-            this.button1.Location = new System.Drawing.Point(253, 516);
+            this.button1.Location = new System.Drawing.Point(253, 514);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(194, 23);
+            this.button1.Size = new System.Drawing.Size(194, 25);
             this.button1.TabIndex = 0;
             this.button1.Text = "Compare";
             this.button1.UseVisualStyleBackColor = true;
@@ -80,7 +80,7 @@
             // Load_VCC
             // 
             this.Load_VCC.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.Load_VCC.Location = new System.Drawing.Point(253, 487);
+            this.Load_VCC.Location = new System.Drawing.Point(253, 485);
             this.Load_VCC.Name = "Load_VCC";
             this.Load_VCC.Size = new System.Drawing.Size(194, 23);
             this.Load_VCC.TabIndex = 1;
@@ -92,7 +92,7 @@
             // 
             this.textBox1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.textBox1.Enabled = false;
-            this.textBox1.Location = new System.Drawing.Point(3, 516);
+            this.textBox1.Location = new System.Drawing.Point(3, 514);
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(244, 20);
             this.textBox1.TabIndex = 3;
@@ -103,14 +103,14 @@
             this.treeView1.Location = new System.Drawing.Point(3, 3);
             this.treeView1.Name = "treeView1";
             this.tableLayoutPanel1.SetRowSpan(this.treeView1, 5);
-            this.treeView1.Size = new System.Drawing.Size(244, 507);
+            this.treeView1.Size = new System.Drawing.Size(244, 505);
             this.treeView1.TabIndex = 4;
             this.treeView1.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterSelect);
             // 
             // button2
             // 
             this.button2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.button2.Location = new System.Drawing.Point(253, 458);
+            this.button2.Location = new System.Drawing.Point(253, 456);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(194, 23);
             this.button2.TabIndex = 5;
@@ -125,7 +125,7 @@
             this.listBox1.IntegralHeight = false;
             this.listBox1.Location = new System.Drawing.Point(253, 3);
             this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(194, 263);
+            this.listBox1.Size = new System.Drawing.Size(194, 261);
             this.listBox1.TabIndex = 6;
             this.listBox1.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
             // 
