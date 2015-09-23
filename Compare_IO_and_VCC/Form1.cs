@@ -78,36 +78,38 @@ namespace Compare_IO_and_VCC
                                     s.Contains("Tachometer"))
                         select tag;
 
-                        TreeNode rootnode = treeView1.Nodes.Add(openFileDialog1.SafeFileName);
-
                         foreach (XElement x in tagQuery)
                         {
                             try
                             {
-                                TreeNode node = rootnode.Nodes.Add(x.Element("NodeName").Value);
-                                node.Nodes.Add(x.Element("NodeId").Value, "Node Id");
+                                object[] rowArray = new object[8];
+                                DataRow relation;
 
-                                TreeNode node_range = node.Nodes.Add(x.Element("NodeId").Value, "Range");
-                                node_range.Nodes.Add(x.Element("NodeId").Value, "Range Low");
-                                node_range.Nodes.Add(x.Element("NodeId").Value, "Range High");
+                                rowArray[0] = null;
+                                rowArray[1] = x.Element("NodeName").Value;
+                                rowArray[2] = 0.1; //rangeLow
+                                rowArray[3] = 1.1; //rangeHigh
+                                rowArray[4] = 2.2; //AlertHigh
+                                rowArray[5] = 3.3; //DangerHigh
+                                rowArray[6] = 4.4; //AlertLow
+                                rowArray[7] = 5.5; //DangerLow
 
-                                TreeNode node_limit = node.Nodes.Add(x.Element("NodeId").Value, "Limits");
-                                node_limit.Nodes.Add(x.Element("NodeId").Value, "Alert High");
-                                node_limit.Nodes.Add(x.Element("NodeId").Value, "Danger High");
-                                node_limit.Nodes.Add(x.Element("NodeId").Value, "Alert Low");
-                                node_limit.Nodes.Add(x.Element("NodeId").Value, "Danger Low");
+
+                                relation = dataSet1.Tables["Tags"].NewRow();
+                                relation.ItemArray = rowArray;
+                                dataSet1.Tables["Tags"].Rows.Add(relation);
                             }
                             catch (Exception exc)
                             {
                                 Debug.WriteLine(exc.Message);
                             }
                         }
-                        treeView1.Update();
                     }
                     catch (Exception ex)
                     {
                         MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
                     }
+                    
                     //Delete temp folder
                     Directory.Delete(di.FullName, true);
                 }
